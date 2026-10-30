@@ -12,22 +12,26 @@ public class UrlService {
         this.repository = repository;
     }
 
-
-    @Transactional 
+    @Transactional
     public UrlMapping createShortUrl(String originalUrl) {
         UrlMapping mapping = new UrlMapping(originalUrl);
-        mapping = repository.save(mapping);     // database assigns the id 
+        mapping = repository.save(mapping); // database assigns the id
         mapping.setShortCode(Base62.encode(mapping.getId()));
-        return repository.save(mapping);     // save again with the code
+        return repository.save(mapping); // save again with the code
     }
 
-    @Transactional 
+    @Transactional
     public String resolve(String shortCode) {
         UrlMapping mapping = repository.findByShortCode(shortCode)
-        .orElseThrow(() -> new IllegalArgumentException("Unknown short code: " + shortCode));
+                .orElseThrow(() -> new UrlNotFoundException(shortCode));
         mapping.incrementClickCount();
         repository.save(mapping);
         return mapping.getOriginalUrl();
     }
 
+    @Transactional(readOnly = true)
+    public UrlMapping getStats(String shortCode) {
+        return repository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException(shortCode));
+    }
 }
