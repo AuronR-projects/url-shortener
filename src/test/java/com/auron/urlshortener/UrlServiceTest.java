@@ -12,6 +12,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,5 +59,19 @@ class UrlServiceTest {
         when(repository.findByShortCode("nope")).thenReturn(Optional.empty());
 
         assertThrows(UrlNotFoundException.class, () -> service.resolve("nope"));
+    }
+
+        @Test
+    void createShortUrlRejectsUrlWithSpaces() {
+        assertThrows(InvalidUrlException.class,
+                () -> service.createShortUrl("https://example.com/a b"));
+        verify(repository, never()).save(any(UrlMapping.class));
+    }
+
+    @Test
+    void createShortUrlRejectsUrlWithoutHost() {
+        assertThrows(InvalidUrlException.class,
+                () -> service.createShortUrl("https://"));
+        verify(repository, never()).save(any(UrlMapping.class));
     }
 }
